@@ -12,151 +12,19 @@ interface HomePageProps {
   isTransitioning: boolean;
 }
 
-// Grid animation utility - consider moving to a utils.js later
+// CSS-only LED animation - no more data URLs!
 const useGridAnimation = (gridRef: React.RefObject<HTMLSpanElement | null>, currentPage: string) => {
-  const animationRef = useRef<number | null>(null);
-  const lastFrameTime = useRef<number>(0);
-
   useEffect(() => {
     if (!gridRef.current || currentPage !== 'home') return;
 
     const textElement = gridRef.current;
-    const isMobile = window.innerWidth < 768;
-    const isLowPerformance = isMobile && (navigator.hardwareConcurrency <= 4 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-
-    // Use simple CSS gradient on low-performance devices
-    if (isLowPerformance) {
-      textElement.style.background = 'linear-gradient(45deg, #a855f7 0%, #3b82f6 50%, #a855f7 100%)';
-      textElement.style.backgroundSize = '200% 200%';
-      textElement.style.backgroundClip = 'text';
-      textElement.style.webkitBackgroundClip = 'text';
-      textElement.style.animation = 'gradientShift 3s ease-in-out infinite alternate';
-      return;
-    }
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
-
-    if (!ctx) {
-      // Fallback to CSS gradient
-      textElement.style.background = 'linear-gradient(45deg, #a855f7, #3b82f6)';
-      textElement.style.backgroundClip = 'text';
-      textElement.style.webkitBackgroundClip = 'text';
-      return;
-    }
-
-    // Further optimize canvas size for mobile
-    canvas.width = isMobile ? 150 : 400;
-    canvas.height = isMobile ? 75 : 200;
-
-    const s = isMobile ? 10 : 12;
-    const blockSize = isMobile ? 6 : 8;
-    const cols = Math.floor(canvas.width / s);
-    const rows = Math.floor(canvas.height / s);
-    const blocks: Array<{
-      x: number;
-      y: number;
-      distance: number;
-      angle: number;
-    }> = [];
-    let time = 0;
-    const centerX = cols / 2;
-    const centerY = rows / 2;
-
-    // Reduce number of blocks on mobile
-    const maxBlocks = isMobile ? 100 : cols * rows;
-    let blockCount = 0;
-
-    for (let i = 0; i < rows && blockCount < maxBlocks; i++) {
-      for (let j = 0; j < cols && blockCount < maxBlocks; j++) {
-        const distanceFromCenter = Math.sqrt((j - centerX) * (j - centerX) + (i - centerY) * (i - centerY));
-        const angle = Math.atan2(i - centerY, j - centerX);
-
-        blocks.push({
-          x: j * s,
-          y: i * s,
-          distance: distanceFromCenter,
-          angle: angle
-        });
-        blockCount++;
-      }
-    }
-
-    function animate(currentTime: number) {
-      if (!ctx || !textElement) return;
-
-      // Throttle animation on mobile (30fps instead of 60fps)
-      const targetFPS = isMobile ? 30 : 60;
-      const frameInterval = 1000 / targetFPS;
-      
-      if (currentTime - lastFrameTime.current < frameInterval) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-      lastFrameTime.current = currentTime;
-      
-      time += isMobile ? 0.03 : 0.04;
-
-      ctx.fillStyle = '#4c1d95';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Simplified animation for mobile
-      blocks.forEach(block => {
-        if (isMobile) {
-          // Simpler calculation for mobile
-          const wave = Math.sin(time - block.distance * 0.2);
-          const intensity = (wave + 1) / 2;
-          const brightness = Math.floor(168 + intensity * 60);
-          ctx.fillStyle = `rgba(${brightness}, 85, 247, ${0.7 + intensity * 0.3})`;
-        } else {
-          // Full animation for desktop
-          const radialWave = Math.sin(time - block.distance * 0.3);
-          const angularWave = Math.sin(time * 0.8 + block.angle * 2);
-          const pulseWave = Math.sin(time * 1.5 - block.distance * 0.5);
-
-          const intensity = (radialWave + angularWave * 0.5 + pulseWave * 0.3);
-          const normalizedIntensity = (intensity + 1) / 2;
-
-          const r = Math.max(100, Math.min(255, 168 + (normalizedIntensity * 60 - 30)));
-          const g = Math.max(50, Math.min(200, 85 + (normalizedIntensity * 80 - 40)));
-          const b = Math.max(200, Math.min(255, 247 + (normalizedIntensity * 20 - 10)));
-          const alpha = 0.7 + (normalizedIntensity * 0.3);
-
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-        
-        ctx.fillRect(block.x, block.y, blockSize, blockSize);
-      });
-
-      try {
-        const dataURL = canvas.toDataURL('image/png', 0.8); // Reduce quality slightly
-        if (textElement && textElement.style) {
-          textElement.style.background = `url(${dataURL})`;
-          textElement.style.backgroundSize = 'cover';
-          textElement.style.backgroundPosition = 'center';
-          textElement.style.backgroundClip = 'text';
-          textElement.style.webkitBackgroundClip = 'text';
-        }
-      } catch (error) {
-        console.warn('Canvas animation error:', error);
-        // Fallback to CSS gradient
-        if (textElement && textElement.style) {
-          textElement.style.background = 'linear-gradient(45deg, #a855f7, #3b82f6)';
-          textElement.style.backgroundClip = 'text';
-          textElement.style.webkitBackgroundClip = 'text';
-        }
-        return;
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
-    }
-
-    // Start animation
-    animationRef.current = requestAnimationFrame(animate);
-
+    
+    // Apply CSS-only LED animation
+    textElement.classList.add('led-animation');
+    
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (textElement) {
+        textElement.classList.remove('led-animation');
       }
     };
   }, [gridRef, currentPage]);
