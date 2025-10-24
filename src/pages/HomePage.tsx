@@ -6,6 +6,7 @@ import UserProfile from '../components/UserProfile.tsx';
 import StripeCheckout from '../components/StripeCheckout.tsx';
 import DownloadModal from '../components/DownloadModal.tsx';
 import LEDParticleBackground from '../components/LEDParticleBackground.tsx';
+import ReferralRewardModal from '../components/ReferralRewardModal.tsx';
 import { useSubscriptionStatus } from '../hooks/useSubscriptionStatus.ts';
 import '../App.css';
 
@@ -54,7 +55,7 @@ const useGridAnimation = (gridRef: React.RefObject<HTMLSpanElement | null>, curr
 };
 
 // --- New Sections ---
-function ComparisonSection({ onUpgrade, isLoading }: { onUpgrade: () => void; isLoading: boolean }) {
+function ComparisonSection({ onUpgrade, isLoading, isPro, isAuthenticated }: { onUpgrade: () => void; isLoading: boolean; isPro: boolean; isAuthenticated: boolean }) {
   const rows = [
     { feature: 'Local device control', free: true, pro: true },
     { feature: 'Cloud access (anywhere)', free: false, pro: true },
@@ -102,10 +103,20 @@ function ComparisonSection({ onUpgrade, isLoading }: { onUpgrade: () => void; is
           </motion.div>
 
           <motion.div className="mt-8" variants={itemVariants}>
-            <button onClick={onUpgrade} disabled={isLoading} className="btn btn-secondary disabled:opacity-50">
-              {isLoading ? 'Loading…' : 'Upgrade to Pro'}
-              {!isLoading && <ExternalLink className="w-5 h-5 ml-2" />}
-            </button>
+            {isAuthenticated && isPro ? (
+              <button 
+                disabled
+                className="btn btn-secondary opacity-75 cursor-not-allowed bg-gradient-to-r from-yellow-600 to-yellow-700 border-yellow-500"
+              >
+                <Crown className="w-5 h-5 mr-2 text-yellow-300" />
+                Pro Status Active
+              </button>
+            ) : (
+              <button onClick={onUpgrade} disabled={isLoading} className="btn btn-secondary disabled:opacity-50">
+                {isLoading ? 'Loading…' : 'Upgrade to Pro'}
+                {!isLoading && <ExternalLink className="w-5 h-5 ml-2" />}
+              </button>
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -147,12 +158,41 @@ function CloudSection() {
   );
 }
 
-function ReferralSection() {
+function ReferralSection({ handlePageChange }: { handlePageChange: (page: string) => void }) {
   const [copied, setCopied] = useState(false);
-  const { user } = useAuth();
-  const referral = typeof window !== 'undefined' && user?.uid
-    ? `${window.location.origin}/?ref=${user.uid}`
-    : 'https://wled.studio/?ref=YOURCODE';
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    // Fetch user's referral code from backend
+    const fetchReferralCode = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = await window.Clerk?.session?.getToken();
+          if (token) {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/referral/check`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setReferralCode(data.referralCode);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch referral code:', error);
+        }
+      }
+    };
+    
+    fetchReferralCode();
+  }, [isAuthenticated]);
+
+  const referral = referralCode
+    ? `https://wledstudio.com/?ref=${referralCode}`
+    : 'https://wledstudio.com/?ref=YOURCODE';
 
   const copy = async () => {
     try {
@@ -170,16 +210,30 @@ function ReferralSection() {
             Referral Rewards
           </motion.h2>
           <motion.p className="text-slate-300 mb-8 max-w-2xl" variants={itemVariants}>
-            Invite a friend. You both save. Share your unique link and earn credits toward Pro.
+            Invite a friend. You both get a reward. Share your unique link and both receive a&nbsp;14-day&nbsp;Pro&nbsp;trial!
           </motion.p>
 
-          <motion.div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" variants={itemVariants}>
-            <code className="flex-1 rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-slate-300 text-sm overflow-x-auto">{referral}</code>
-            <button onClick={copy} className="btn btn-secondary">
-              <Share2 className="w-4 h-4 mr-2" />
-              {copied ? 'Copied' : 'Copy link'}
-            </button>
-          </motion.div>
+          {isAuthenticated ? (
+            <motion.div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" variants={itemVariants}>
+              <code className="flex-1 rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-slate-300 text-sm overflow-x-auto">{referral}</code>
+              <button onClick={copy} className="btn btn-secondary">
+                <Share2 className="w-4 h-4 mr-2" />
+                {copied ? 'Copied' : 'Copy link'}
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div className="bg-slate-900/60 border border-slate-700 rounded-xl p-6 text-center" variants={itemVariants}>
+              <p className="text-slate-300 mb-4">Sign in to get your custom referral code and start earning rewards!</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onClick={() => handlePageChange('login')} className="btn btn-secondary">
+                  Sign In
+                </button>
+                <button onClick={() => handlePageChange('signup')} className="btn btn-primary">
+                  Sign Up
+                </button>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </section>
@@ -191,8 +245,8 @@ function FinalCTA({ onDownload, onUpgrade, proActive, isLoading }: { onDownload:
     <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700 p-8 sm:p-12 text-center">
-          <h2 className="text-3xl sm:text-4xl font-semibold mb-4">Ready to build brighter walls?</h2>
-          <p className="text-slate-300 mb-8">Download free. Go Pro when you need remote control and advanced tools.</p>
+          <h2 className="text-3xl sm:text-4xl font-semibold mb-4">Take complete control of your WLED experience</h2>
+          <p className="text-slate-300 mb-8">Download free for local control. Upgrade to Pro for cloud streaming, remote access, and advanced features beyond standard WLED.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button onClick={onDownload} className="btn btn-primary">
               <Download className="w-5 h-5 mr-2" /> Download
@@ -220,9 +274,38 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
   const gridRef = useRef<HTMLSpanElement | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isReferralRewardModalOpen, setIsReferralRewardModalOpen] = useState(false);
+  const [hasReferralReward, setHasReferralReward] = useState(false);
   const { refreshStatus, isPro, isLoading: isLoadingSubscription } = useSubscriptionStatus();
   
   useGridAnimation(gridRef, 'home');
+
+  // Check for referral rewards
+  useEffect(() => {
+    const checkReferralReward = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = await window.Clerk?.session?.getToken();
+          if (token) {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/referral/check`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setHasReferralReward(data.hasReward);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check referral reward:', error);
+        }
+      }
+    };
+    
+    checkReferralReward();
+  }, [isAuthenticated]);
 
   const handleUpgradeClick = () => {
     if (isAuthenticated) {
@@ -259,10 +342,25 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
           <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-end">
             <div className="flex items-center gap-3 sm:gap-4">
               {isAuthenticated ? (
-                <UserProfile 
-                  onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
-                  handlePageChange={handlePageChange}
-                />
+                <>
+                  {hasReferralReward && (
+                    <motion.button
+                      onClick={() => setIsReferralRewardModalOpen(true)}
+                      className="btn bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 border-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/50 animate-pulse"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="mr-2">🎁</span>
+                      Referral Reward
+                    </motion.button>
+                  )}
+                  <UserProfile 
+                    onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
+                    handlePageChange={handlePageChange}
+                    hasReferralReward={hasReferralReward}
+                    onOpenReferralReward={() => setIsReferralRewardModalOpen(true)}
+                  />
+                </>
               ) : (
                 <>
                   <motion.button 
@@ -375,7 +473,7 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
           </motion.div>
         </motion.div>
         {/* Scroll indicator */}
-        <motion.div 
+        <div 
           className="cursor-pointer absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 group"
           onClick={() => {
             const nextSection = document.querySelector('section');
@@ -383,8 +481,6 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
               nextSection.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          whileTap={{ scale: 0.95 }}
-          style={{ transformOrigin: 'center' }}
         >
           <motion.span
             initial={{ opacity: 0 }}
@@ -401,14 +497,14 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             />
           </div>
-        </motion.div>
+        </div>
         </div>
       </div>
 
       {/* New Sections */}
-      <ComparisonSection onUpgrade={handleUpgradeClick} isLoading={isLoadingSubscription} />
+      <ComparisonSection onUpgrade={handleUpgradeClick} isLoading={isLoadingSubscription} isPro={isPro} isAuthenticated={isAuthenticated} />
       <CloudSection />
-      <ReferralSection />
+      <ReferralSection handlePageChange={handlePageChange} />
       <FinalCTA 
         onDownload={() => setIsDownloadModalOpen(true)}
         onUpgrade={handleUpgradeClick}
@@ -465,6 +561,17 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
         handlePageChange={handlePageChange}
+      />
+
+      {/* Referral Reward Modal */}
+      <ReferralRewardModal 
+        isOpen={isReferralRewardModalOpen}
+        onClose={() => {
+          setIsReferralRewardModalOpen(false);
+          // Refresh reward status after closing
+          setHasReferralReward(false);
+          refreshStatus();
+        }}
       />
     </div>
   );

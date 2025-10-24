@@ -83,4 +83,17 @@
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
+  
+  /* Mobile-optimized modal scrolling */
+  .modal-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    overflow-x: hidden;
+  }
+  
+  /* Better mobile scroll for all elements */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
 }

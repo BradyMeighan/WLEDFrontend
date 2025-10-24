@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, ChevronDown, Settings, Crown, LogOut, X, Eye, EyeOff, Check, CreditCard, Calendar, AlertTriangle, Mail } from 'lucide-react';
+import { User, ChevronDown, Settings, Crown, LogOut, X, Eye, EyeOff, Check, CreditCard, Calendar, AlertTriangle, Mail, Gift } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { userAPI } from '../services/api';
 import { stripeService } from '../services/stripe';
@@ -57,6 +57,8 @@ interface SubscriptionData {
 interface UserProfileProps {
   onOpenStripeCheckout?: () => void;
   handlePageChange?: (page: string) => void;
+  hasReferralReward?: boolean;
+  onOpenReferralReward?: () => void;
 }
 
 // Simple Alert component
@@ -200,7 +202,7 @@ const PaymentMethodUpdateForm = ({ onSuccess, onCancel }: {
   );
 };
 
-const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handlePageChange }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handlePageChange, hasReferralReward = false, onOpenReferralReward }) => {
   const { user, logout, updateUser } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -766,6 +768,29 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
               </div>
             </button>
 
+            {/* Referral Reward (if available) */}
+            {hasReferralReward && (
+              <button
+                onClick={() => {
+                  setDropdownTransition(false);
+                  setTimeout(() => {
+                    setIsDropdownOpen(false);
+                    onOpenReferralReward?.();
+                  }, 200);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg text-yellow-200 bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-500/50 hover:from-yellow-800/40 hover:to-orange-800/40 transition-all duration-200 animate-pulse"
+              >
+                <div className="w-10 h-10 bg-yellow-700/50 rounded-lg flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-bold text-sm">Referral Reward! 🎉</p>
+                  <p className="text-xs text-yellow-300">Click to claim</p>
+                </div>
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+              </button>
+            )}
+
             {/* Pro Status */}
             <button
               onClick={handleProStatusClick}
@@ -825,8 +850,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Profile Modal */}
       {isProfileModalOpen && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.profile ? 'opacity-100' : 'opacity-0'}`}>
-          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.profile ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto modal-scroll transition-all duration-300 ${modalTransitions.profile ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto my-auto modal-scroll transition-all duration-300 ${modalTransitions.profile ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
               <h2 className="text-2xl font-bold text-white">Profile Settings</h2>
@@ -1008,8 +1033,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Pro Status Modal */}
       {isProStatusModalOpen && proStatusData && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100' : 'opacity-0'}`}>
-          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto modal-scroll transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto my-auto modal-scroll transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
               <div className="flex items-center space-x-4">
@@ -1118,8 +1143,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Manage Subscription Modal */}
       {isManageSubscriptionModalOpen && subscriptionData && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100' : 'opacity-0'}`}>
-          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto modal-scroll transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto my-auto modal-scroll transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
               <div className="flex items-center space-x-4">
@@ -1284,8 +1309,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Payment Method Update Modal */}
       {isUpdatePaymentModalOpen && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100' : 'opacity-0'}`}>
-          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto modal-scroll transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto my-auto modal-scroll transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
               <div className="flex items-center space-x-4">

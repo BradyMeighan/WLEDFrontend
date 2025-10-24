@@ -45,6 +45,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check for referral code in URL and store it
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const referralCode = urlParams.get('ref');
+    
+    if (referralCode) {
+      // Store referral code in localStorage for signup
+      localStorage.setItem('referralCode', referralCode);
+      console.log('📎 Referral code detected:', referralCode);
+    }
+  }, []);
+
   // Sync Clerk user with our backend database and local state
   useEffect(() => {
     const syncUser = async () => {
@@ -58,7 +70,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               console.log('🌐 Backend URL:', import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app');
               console.log('🔑 Token preview:', token.substring(0, 20) + '...');
               
-              const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/user/sync`, {
+              // Check for stored referral code
+              const referralCode = localStorage.getItem('referralCode');
+              const syncUrl = referralCode 
+                ? `${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/user/sync?ref=${referralCode}`
+                : `${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/user/sync`;
+              
+              const response = await fetch(syncUrl, {
                 method: 'GET',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -73,6 +91,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               if (response.ok) {
                 const data = await response.json();
                 console.log('✅ User synced with backend:', data.user);
+                
+                // Clear referral code after successful sync
+                localStorage.removeItem('referralCode');
                 
                 // Update local state with backend data
                 setUser({
