@@ -35,14 +35,15 @@ export default function MeControlSVG() {
   }, []);
 
   return (
-    <div ref={rootRef} className="w-full h-full">
+    <div ref={rootRef} className="w-full">
       <svg
         version="1.1"
         xmlns="http://www.w3.org/2000/svg"
         xmlnsXlink="http://www.w3.org/1999/xlink"
         x="0px"
         y="0px"
-        viewBox="0 0 1280 1024"
+        viewBox="450 200 350 450"
+        className="w-full h-auto max-h-32 sm:max-h-40"
       >
         <style type="text/css">{
           `

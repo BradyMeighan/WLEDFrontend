@@ -75,7 +75,8 @@ function ComparisonSection({ onUpgrade, isLoading, isPro, isAuthenticated }: { o
             Know exactly what you unlock when you upgrade.
           </motion.p>
 
-          <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-6" variants={itemVariants}>
+          {/* Desktop Table View */}
+          <motion.div className="hidden lg:grid grid-cols-3 gap-6" variants={itemVariants}>
             {/* Column headers */}
             <div className="hidden lg:block" />
             <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 text-center">
@@ -100,6 +101,55 @@ function ComparisonSection({ onUpgrade, isLoading, isPro, isAuthenticated }: { o
                 </motion.div>
               </React.Fragment>
             ))}
+          </motion.div>
+
+          {/* Mobile Card View */}
+          <motion.div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4" variants={itemVariants}>
+            {/* Free Plan Card */}
+            <motion.div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700" variants={itemVariants}>
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-white mb-2">WLED Studio</h3>
+                <p className="text-slate-400 text-sm">Free Forever</p>
+              </div>
+              <div className="space-y-3">
+                {rows.map((r) => (
+                  <div key={`free-${r.feature}`} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-sky-300" />
+                      <span className="text-slate-300 text-sm">{r.feature}</span>
+                    </div>
+                    {r.free ? (
+                      <span className="text-green-400 text-sm font-medium">✓</span>
+                    ) : (
+                      <span className="text-slate-500 text-sm">—</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Pro Plan Card */}
+            <motion.div className="bg-gradient-to-br from-yellow-700/40 to-yellow-600/30 rounded-2xl p-6 border border-yellow-600" variants={itemVariants}>
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-white mb-2">WLED Studio Pro</h3>
+                <p className="text-yellow-200 text-sm">$9.99/month</p>
+              </div>
+              <div className="space-y-3">
+                {rows.map((r) => (
+                  <div key={`pro-${r.feature}`} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-yellow-300" />
+                      <span className="text-slate-200 text-sm">{r.feature}</span>
+                    </div>
+                    {r.pro ? (
+                      <span className="text-yellow-300 text-sm font-medium">✓</span>
+                    ) : (
+                      <span className="text-slate-500 text-sm">—</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.div className="mt-8" variants={itemVariants}>
@@ -363,7 +413,7 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
                         console.log('🎁 Referral Reward button clicked!');
                         setIsReferralRewardModalOpen(true);
                       }}
-                      className="btn bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 border-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/50 animate-pulse px-4 py-2 text-sm sm:text-base"
+                      className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-bold shadow-lg shadow-yellow-500/50 animate-pulse px-4 py-2 rounded-xl border border-yellow-500 transition-all duration-200 text-sm sm:text-base"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       style={{ animationDuration: '2s' }}
@@ -552,6 +602,15 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
             whileTap={{ scale: 0.95 }}
           >
             Privacy Policy
+          </motion.a>
+          <motion.a 
+            href="#" 
+            onClick={() => handlePageChange('terms')} 
+            className="text-slate-400 hover:text-slate-200 transition-colors text-sm sm:text-base touch-target"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Terms of Service
           </motion.a>
           <motion.a 
             href="#" 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, AddressElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Crown, CreditCard, Shield, X, Check, AlertCircle, Loader } from 'lucide-react';
 import { stripeService } from '../services/stripe';
 
@@ -241,20 +241,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ selectedPlan, onSuccess, on
                   defaultCollapsed: false,
                   radios: false,
                   spacedAccordionItems: true
+                },
+                fields: {
+                  billingDetails: {
+                    address: {
+                      postalCode: 'auto' // Only collect postal code
+                    }
+                  }
                 }
-              }}
-            />
-          </div>
-
-          {/* Address Element */}
-          <div className="bg-slate-800/50 border border-slate-600/50 rounded-xl p-6">
-            <h4 className="text-lg font-semibold text-white mb-4">
-              Billing Address
-            </h4>
-            <AddressElement 
-              options={{
-                mode: 'billing',
-                allowedCountries: ['US', 'CA', 'GB', 'AU', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE']
               }}
             />
           </div>

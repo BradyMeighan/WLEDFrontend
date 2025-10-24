@@ -160,7 +160,7 @@ const ReferralPaymentForm = ({ onSuccess, onError }: { onSuccess: () => void; on
           <div>
             <p className="text-yellow-200 font-medium text-sm">14-Day Free Trial Included!</p>
             <p className="text-yellow-300 text-xs mt-1">
-              Your card will not be charged for 14 days. Cancel anytime before the trial ends to avoid charges.
+              Your card will not be charged for 14 days. After the trial, you'll be billed $9.99/month for the Pro subscription. Cancel anytime before the trial ends to avoid charges.
             </p>
           </div>
         </div>
@@ -232,7 +232,7 @@ const ReferralRewardModal: React.FC<ReferralRewardModalProps> = ({ isOpen, onClo
               </button>
               
               <div className="flex items-center justify-center mb-4">
-                <div className="w-32 h-32">
+                <div className="w-32 sm:w-40 max-w-full">
                   <MeControlSVG />
                 </div>
               </div>
@@ -313,10 +313,17 @@ const ReferralRewardModal: React.FC<ReferralRewardModalProps> = ({ isOpen, onClo
                     </Elements>
                   </div>
 
-                  <p className="text-xs text-slate-500 text-center">
-                    By activating your trial, you agree to our Terms of Service. 
-                    Your subscription will automatically renew after 14 days unless cancelled.
-                  </p>
+                  <div className="text-xs text-slate-400 text-center space-y-1">
+                    <p>
+                      By activating your trial, you'll be enrolled in a <strong className="text-white">monthly Pro subscription ($9.99/month)</strong>.
+                    </p>
+                    <p>
+                      Your card will be charged after the 14-day trial. Cancel anytime in your account settings.
+                    </p>
+                    <p className="text-slate-500 mt-2">
+                      By proceeding, you agree to our Terms of Service and Privacy Policy.
+                    </p>
+                  </div>
                 </>
               )}
             </div>

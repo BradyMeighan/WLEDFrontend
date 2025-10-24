@@ -5,11 +5,12 @@ import './App.css';
 import HomePage from './pages/HomePage.tsx';
 import EmailVerificationPage from './pages/EmailVerificationPage.tsx';
 import PrivacyPage from './pages/PrivacyPage.tsx';
+import TermsPage from './pages/TermsPage.tsx';
 import ContactPage from './pages/ContactPage.tsx';
 import BugReportPage from './pages/BugReportPage.tsx';
 import AuthModal from './components/AuthModal.tsx';
 
-type PageType = 'home' | 'verify-email' | 'privacy' | 'contact' | 'bug-report';
+type PageType = 'home' | 'verify-email' | 'privacy' | 'terms' | 'contact' | 'bug-report';
 
 // Page transition variants
 const pageVariants = {
@@ -95,6 +96,8 @@ function AppContent() {
         return <EmailVerificationPage key="verify-email" handlePageChange={handlePageChange} />;
       case 'privacy':
         return <PrivacyPage key="privacy" handlePageChange={handlePageChange} />;
+      case 'terms':
+        return <TermsPage key="terms" handlePageChange={handlePageChange} />;
       case 'contact':
         return <ContactPage key="contact" handlePageChange={handlePageChange} />;
       case 'bug-report':
