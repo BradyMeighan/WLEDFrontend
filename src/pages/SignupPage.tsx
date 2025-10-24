@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import Alert from '../components/Alert.tsx';
 import PasswordStrength from '../components/PasswordStrength.tsx';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import '../App.css';
 
 interface SignupPageProps {
   handlePageChange: (page: string) => void;
@@ -19,18 +19,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ handlePageChange }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [passwordFocused, setPasswordFocused] = useState<boolean>(false);
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const { register, user } = useAuth();
-
-  useEffect(() => {
-    // Fade in animation
-    const timer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -92,92 +81,160 @@ const SignupPage: React.FC<SignupPageProps> = ({ handlePageChange }) => {
   return (
     <div className="min-h-screen bg-slate-900 text-white relative">
       {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30"></div>
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
       
-      <div className={`relative z-10 flex items-center justify-center min-h-screen p-4 transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="bg-slate-800/90 backdrop-blur-lg p-8 md:p-10 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700/50">
-          {/* Back button inside the form box */}
-          <div className="flex items-center mb-6">
-            <button 
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <motion.div 
+          className="bg-slate-800/90 backdrop-blur-lg p-6 sm:p-8 md:p-10 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700/50"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Back button */}
+          <motion.div 
+            className="flex items-center mb-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <motion.button 
               onClick={() => handlePageChange('home')}
-              className="flex items-center text-slate-400 hover:text-white transition-colors duration-300 group"
+              className="flex items-center text-slate-400 hover:text-white transition-colors group touch-target"
+              whileHover={{ x: -5 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <ArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-300" />
+              <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Home
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
           
-          <h2 className="text-4xl font-bold text-center text-purple-400 mb-8">Create Account</h2>
+          <motion.h2 
+            className="text-3xl sm:text-4xl font-bold text-center text-purple-400 mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            Create Account
+          </motion.h2>
           
           {error && (
-            <div className="mb-6">
+            <motion.div 
+              className="mb-6"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
               <Alert message={error} type="error" onClose={() => setError('')} />
-            </div>
+            </motion.div>
           )}
           {success && (
-            <div className="text-center space-y-8 max-w-2xl mx-auto">
+            <motion.div 
+              className="text-center space-y-8"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
               {/* Success Animation */}
-              <div className="relative">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center animate-pulse">
-                  <svg className="w-10 h-10 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+              <motion.div 
+                className="relative"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", duration: 0.6 }}
+              >
+                <div className="w-20 h-20 mx-auto bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                  <motion.svg 
+                    className="w-10 h-10 text-white" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                  >
+                    <motion.path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={3} 
+                      d="M5 13l4 4L19 7"
+                    />
+                  </motion.svg>
                 </div>
                 {/* Ripple effect */}
                 <div className="absolute inset-0 w-20 h-20 mx-auto bg-green-400/20 rounded-full animate-ping"></div>
-                <div className="absolute inset-0 w-20 h-20 mx-auto bg-green-400/10 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
-              </div>
+              </motion.div>
 
               {/* Success Message */}
-              <div className="space-y-6">
-                <h3 className="text-4xl font-bold text-white">Account Created Successfully!</h3>
-                <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-8 backdrop-blur-sm">
-                  <p className="text-green-200 text-xl leading-relaxed">
+              <motion.div 
+                className="space-y-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h3 className="text-3xl sm:text-4xl font-bold text-white">Account Created Successfully!</h3>
+                <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-6 sm:p-8 backdrop-blur-sm">
+                  <p className="text-green-200 text-lg sm:text-xl leading-relaxed">
                     Welcome to WLED Studio! We've sent a verification email to{' '}
-                    <span className="font-semibold text-green-100">{email}</span>
+                    <span className="font-semibold text-green-100 break-all">{email}</span>
                   </p>
-                  <p className="text-green-300 mt-4 text-lg">
+                  <p className="text-green-300 mt-4 text-base sm:text-lg">
                     Please check your inbox and click the verification link to activate your account.
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <button 
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4 pt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <motion.button 
                   onClick={() => handlePageChange('login')} 
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 text-lg"
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 text-lg touch-target"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Go to Sign In
-                </button>
-                <button 
+                </motion.button>
+                <motion.button 
                   onClick={() => handlePageChange('home')} 
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-800 text-lg"
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-8 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-800 text-lg touch-target"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Back to Home
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
 
               {/* Didn't receive email? */}
-              <div className="pt-6 border-t border-slate-600/50">
-                <p className="text-slate-400 text-lg">
+              <motion.div 
+                className="pt-6 border-t border-slate-600/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                <p className="text-slate-400 text-base sm:text-lg">
                   Didn't receive the email?{' '}
                   <button 
                     onClick={() => {
-                      // Here you could implement resend functionality
                       alert('Resend functionality would be implemented here');
                     }}
-                    className="text-purple-400 hover:text-purple-300 underline transition-colors duration-300 font-semibold"
+                    className="text-purple-400 hover:text-purple-300 underline transition-colors font-semibold touch-target"
                   >
                     Resend verification email
                   </button>
                 </p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
           
           {!success && (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <motion.form 
+              onSubmit={handleSubmit} 
+              className="space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               <div>
                 <label htmlFor="fullName" className="block text-sm font-semibold text-slate-300 mb-2">
                   Full Name
@@ -295,10 +352,12 @@ const SignupPage: React.FC<SignupPageProps> = ({ handlePageChange }) => {
                 </label>
               </div>
               
-              <button 
+              <motion.button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-lg"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-lg touch-target"
                 disabled={loading}
+                whileHover={{ scale: loading ? 1 : 1.02 }}
+                whileTap={{ scale: loading ? 1 : 0.98 }}
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -308,23 +367,28 @@ const SignupPage: React.FC<SignupPageProps> = ({ handlePageChange }) => {
                 ) : (
                   'Create Account'
                 )}
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
           )}
           
-          <div className="mt-8 text-center">
+          <motion.div 
+            className="mt-8 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
             <p className="text-slate-400">
               Already have an account?{' '}
               <button 
                 onClick={() => handlePageChange('login')} 
-                className="text-purple-400 hover:text-purple-300 font-semibold hover:underline transition-colors duration-300"
+                className="text-purple-400 hover:text-purple-300 font-semibold hover:underline transition-colors touch-target"
                 disabled={loading}
               >
                 Sign in here
               </button>
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

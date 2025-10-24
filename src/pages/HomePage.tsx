@@ -1,25 +1,48 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Download, ExternalLink, Crown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Download, ExternalLink, Crown, Share2, CheckCircle2, LockKeyhole, Globe2, Server, Cloud } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import UserProfile from '../components/UserProfile.tsx';
 import StripeCheckout from '../components/StripeCheckout.tsx';
 import DownloadModal from '../components/DownloadModal.tsx';
+import LEDParticleBackground from '../components/LEDParticleBackground.tsx';
 import { useSubscriptionStatus } from '../hooks/useSubscriptionStatus.ts';
 import '../App.css';
 
 interface HomePageProps {
   handlePageChange: (page: string) => void;
-  isTransitioning: boolean;
 }
 
-// CSS-only LED animation - no more data URLs!
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+};
+
+// CSS-only LED animation
 const useGridAnimation = (gridRef: React.RefObject<HTMLSpanElement | null>, currentPage: string) => {
   useEffect(() => {
     if (!gridRef.current || currentPage !== 'home') return;
 
     const textElement = gridRef.current;
-    
-    // Apply CSS-only LED animation
     textElement.classList.add('led-animation');
     
     return () => {
@@ -30,32 +53,187 @@ const useGridAnimation = (gridRef: React.RefObject<HTMLSpanElement | null>, curr
   }, [gridRef, currentPage]);
 };
 
-const HomePage: React.FC<HomePageProps> = ({ handlePageChange, isTransitioning }) => {
-  const { isAuthenticated, user } = useAuth();
+// --- New Sections ---
+function ComparisonSection({ onUpgrade, isLoading }: { onUpgrade: () => void; isLoading: boolean }) {
+  const rows = [
+    { feature: 'Local device control', free: true, pro: true },
+    { feature: 'Cloud access (anywhere)', free: false, pro: true },
+    { feature: 'Real‑time streaming', free: true, pro: true },
+    { feature: 'Remote diagnostics', free: false, pro: true },
+    { feature: 'Priority updates & support', free: false, pro: true },
+  ];
+
+  return (
+    <section className="py-16 sm:py-20 bg-slate-950/40">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}>
+          <motion.h2 className="text-3xl sm:text-4xl font-semibold mb-4" variants={itemVariants}>
+            WLED Studio vs WLED Studio <span className="text-yellow-300">Pro</span>
+          </motion.h2>
+          <motion.p className="text-slate-300 mb-8 max-w-2xl" variants={itemVariants}>
+            Know exactly what you unlock when you upgrade.
+          </motion.p>
+
+          <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-6" variants={itemVariants}>
+            {/* Column headers */}
+            <div className="hidden lg:block" />
+            <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700 text-center">
+              <p className="text-lg font-medium">WLED Studio</p>
+            </div>
+            <div className="bg-gradient-to-br from-yellow-700/40 to-yellow-600/30 rounded-2xl p-4 border border-yellow-600 text-center">
+              <p className="text-lg font-medium">WLED Studio Pro</p>
+            </div>
+
+            {/* Rows */}
+            {rows.map((r, idx) => (
+              <React.Fragment key={r.feature}>
+                <motion.div className="flex items-center gap-3 py-4 px-2 border-b border-slate-800" variants={itemVariants}>
+                  <CheckCircle2 className="w-5 h-5 text-sky-300" />
+                  <p className="text-slate-200">{r.feature}</p>
+                </motion.div>
+                <motion.div className="py-4 px-2 text-center border-b border-slate-800" variants={itemVariants}>
+                  {r.free ? <span className="text-green-400">Included</span> : <span className="text-slate-500">—</span>}
+                </motion.div>
+                <motion.div className="py-4 px-2 text-center border-b border-slate-800" variants={itemVariants}>
+                  {r.pro ? <span className="text-yellow-300">Included</span> : <span className="text-slate-500">—</span>}
+                </motion.div>
+              </React.Fragment>
+            ))}
+          </motion.div>
+
+          <motion.div className="mt-8" variants={itemVariants}>
+            <button onClick={onUpgrade} disabled={isLoading} className="btn btn-secondary disabled:opacity-50">
+              {isLoading ? 'Loading…' : 'Upgrade to Pro'}
+              {!isLoading && <ExternalLink className="w-5 h-5 ml-2" />}
+            </button>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function CloudSection() {
+  const cards = [
+    { icon: <Globe2 className="w-6 h-6" />, title: 'Anywhere control', desc: 'Send scenes and start streams from outside your LAN.' },
+    { icon: <Server className="w-6 h-6" />, title: 'Local anchor', desc: 'One computer running WLED Studio on your network acts as the always‑on bridge.' },
+    { icon: <Cloud className="w-6 h-6" />, title: 'WebSockets + daemon', desc: 'Persistent connection keeps devices in sync with low latency.' },
+    { icon: <LockKeyhole className="w-6 h-6" />, title: 'Secure by design', desc: 'Auth‑gated access with user‑scoped permissions.' },
+  ];
+
+  return (
+    <section className="py-16 sm:py-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}>
+          <motion.h2 className="text-3xl sm:text-4xl font-semibold mb-4" variants={itemVariants}>
+            Cloud Connect for Pro
+          </motion.h2>
+          <motion.p className="text-slate-300 mb-10 max-w-2xl" variants={itemVariants}>
+            Pro users unlock remote control for their WLED walls. Keep a single machine running WLED Studio on your home or venue network and manage everything from anywhere.
+          </motion.p>
+
+          <motion.div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" variants={itemVariants}>
+            {cards.map((c) => (
+              <div key={c.title} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+                <div className="mb-3 text-slate-200">{c.icon}</div>
+                <h3 className="font-medium mb-1">{c.title}</h3>
+                <p className="text-slate-400 text-sm">{c.desc}</p>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function ReferralSection() {
+  const [copied, setCopied] = useState(false);
+  const { user } = useAuth();
+  const referral = typeof window !== 'undefined' && user?.uid
+    ? `${window.location.origin}/?ref=${user.uid}`
+    : 'https://wled.studio/?ref=YOURCODE';
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(referral);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  return (
+    <section className="py-16 sm:py-20 bg-slate-950/40">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}>
+          <motion.h2 className="text-3xl sm:text-4xl font-semibold mb-4" variants={itemVariants}>
+            Referral Rewards
+          </motion.h2>
+          <motion.p className="text-slate-300 mb-8 max-w-2xl" variants={itemVariants}>
+            Invite a friend. You both save. Share your unique link and earn credits toward Pro.
+          </motion.p>
+
+          <motion.div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" variants={itemVariants}>
+            <code className="flex-1 rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-slate-300 text-sm overflow-x-auto">{referral}</code>
+            <button onClick={copy} className="btn btn-secondary">
+              <Share2 className="w-4 h-4 mr-2" />
+              {copied ? 'Copied' : 'Copy link'}
+            </button>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA({ onDownload, onUpgrade, proActive, isLoading }: { onDownload: () => void; onUpgrade: () => void; proActive: boolean; isLoading: boolean }) {
+  return (
+    <section className="py-16 sm:py-24">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700 p-8 sm:p-12 text-center">
+          <h2 className="text-3xl sm:text-4xl font-semibold mb-4">Ready to build brighter walls?</h2>
+          <p className="text-slate-300 mb-8">Download free. Go Pro when you need remote control and advanced tools.</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button onClick={onDownload} className="btn btn-primary">
+              <Download className="w-5 h-5 mr-2" /> Download
+            </button>
+            {proActive ? (
+              <button disabled className="btn btn-secondary opacity-75 cursor-not-allowed bg-gradient-to-r from-yellow-600 to-yellow-700 border-yellow-500">
+                <Crown className="w-5 h-5 mr-2 text-yellow-300" /> Pro Status Active
+              </button>
+            ) : (
+              <button onClick={onUpgrade} disabled={isLoading} className="btn btn-secondary disabled:opacity-50">
+                {isLoading ? 'Loading…' : 'Upgrade to Pro'}
+                {!isLoading && <ExternalLink className="w-5 h-5 ml-2" />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
+  const { isAuthenticated } = useAuth();
   const rings = Array.from({ length: 36 }, (_, i) => i + 1);
   const gridRef = useRef<HTMLSpanElement | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-  
-  // Check subscription status on page load
   const { refreshStatus, isPro, isLoading: isLoadingSubscription } = useSubscriptionStatus();
   
-  // Using the custom hook for grid animation
-  // Passing 'home' directly as currentPage because this component IS the home page.
   useGridAnimation(gridRef, 'home');
 
   const handleUpgradeClick = () => {
     if (isAuthenticated) {
       setIsCheckoutOpen(true);
     } else {
-      // Redirect to signup if not authenticated
       handlePageChange('signup');
     }
   };
 
   const handleCheckoutClose = async () => {
     setIsCheckoutOpen(false);
-    // Refresh subscription status when checkout closes (in case payment was successful)
     if (isAuthenticated) {
       await refreshStatus();
     }
@@ -64,13 +242,17 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange, isTransitioning }
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-hidden relative flex flex-col">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30"></div>
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
       
       {/* Header Navigation */}
-      <header className="relative z-20 w-full flex-none">
-        <nav className="container mx-auto py-6 flex items-center justify-end">
-          {/* Auth Buttons */}
-          <div className="flex items-center space-x-4">
+      <motion.header 
+        className="relative z-20 w-full flex-none"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-end">
+          <div className="flex items-center gap-3 sm:gap-4">
             {isAuthenticated ? (
               <UserProfile 
                 onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
@@ -78,111 +260,185 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange, isTransitioning }
               />
             ) : (
               <>
-                <button 
+                <motion.button 
                   onClick={() => handlePageChange('login')}
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm touch-target"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Login
-                </button>
-                <button 
+                </motion.button>
+                <motion.button 
                   onClick={() => handlePageChange('signup')}
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm touch-target"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Sign Up
-                </button>
+                </motion.button>
               </>
             )}
           </div>
         </nav>
-      </header>
+      </motion.header>
       
-      {/* Main content container - centered */}
-      <div className="relative z-10 flex-1 flex items-center justify-center">
-        <div className={`container mx-auto flex items-center justify-between transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-          
-          {/* Left side - Content */}
-          <div className="flex-1 max-w-2xl">
+      {/* Hero */}
+      <div className="relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-8 lg:pt-0 pb-16 lg:pb-24 min-h-[88vh] lg:min-h-[90vh] overflow-visible">
+        {/* LED Particle Background */}
+        <LEDParticleBackground />
+        
+        <motion.div 
+          className="container mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Left */}
+          <motion.div 
+            className="flex-1 max-w-2xl w-full text-center lg:text-left"
+            variants={itemVariants}
+          >
             {/* Animated Text with Grid Background */}
-            <div className="relative mb-8">
+            <div className="mb-8 lg:mb-12">
               <div className="title-container">
                 {/* WLED with LED effect */}
                 <div className="wled-container">
-                  <h1 className="wled-base-text">
-                    WLED
-                  </h1>
-                  <span 
-                    ref={gridRef}
-                    className="wled-grid-overlay"
-                  >
-                    WLED
-                  </span>
+                  <h1 className="wled-base-text">WLED</h1>
+                  <span ref={gridRef} className="wled-grid-overlay">WLED</span>
                 </div>
-                
-                {/* Studio as white text with border */}
-                <h1 className="studio-text">
-                  Studio
-                </h1>
+                {/* Studio */}
+                <h1 className="studio-text">Studio</h1>
               </div>
             </div>
             
-            <p className="text-xl text-slate-300 mb-12 leading-relaxed max-w-xl sm:text-center md:text-left">
-              Stream videos, images, and more to WLED-based LED displays with professional-grade tools and real-time effects.
-            </p>
+            <motion.p 
+              className="text-lg sm:text-xl text-slate-300 mb-8 lg:mb-12 leading-relaxed max-w-xl mx-auto lg:mx-0"
+              variants={itemVariants}
+            >
+              Control and manage your WLED devices from anywhere. Stream content, create effects, and monitor your LED displays remotely with our cloud-ready platform.
+            </motion.p>
             
-            {/* Buttons */}
-            <div className="flex space-x-6 max-sm:space-x-0 max-sm:flex-col max-sm:space-y-4 max-sm:items-center">
-              {/* Download Button */}
-              <button 
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-stretch sm:items-center justify-center lg:justify-start"
+              variants={itemVariants}
+            >
+              <motion.button 
                 onClick={() => setIsDownloadModalOpen(true)}
-                className="btn btn-primary group max-sm:w-full"
+                className="btn btn-primary group w-full sm:w-auto touch-target"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <Download className="w-5 h-5 mr-3 group-hover:animate-bounce" />
                 <span>Download</span>
-              </button>
-              
-              {/* Upgrade to Pro Button / Pro Status */}
+              </motion.button>
               {isAuthenticated && isPro ? (
-                <button 
+                <motion.button 
                   disabled
-                  className="btn btn-secondary group opacity-75 cursor-not-allowed bg-gradient-to-r from-yellow-600 to-yellow-700 border-yellow-500 max-sm:w-full"
+                  className="btn btn-secondary group opacity-75 cursor-not-allowed bg-gradient-to-r from-yellow-600 to-yellow-700 border-yellow-500 w-full sm:w-auto"
+                  whileHover={{ scale: 1 }}
                 >
                   <Crown className="w-5 h-5 mr-3 text-yellow-300" />
                   <span>Pro Status Active</span>
-                </button>
+                </motion.button>
               ) : (
-                <button 
+                <motion.button 
                   onClick={handleUpgradeClick}
                   disabled={isLoadingSubscription}
-                  className="btn btn-secondary group disabled:opacity-50 disabled:cursor-not-allowed max-sm:w-full"
+                  className="btn btn-secondary group disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto touch-target"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <span>{isLoadingSubscription ? 'Loading...' : 'Upgrade to Pro'}</span>
+                  <span>{isLoadingSubscription ? 'Loading…' : 'Upgrade to Pro'}</span>
                   {!isLoadingSubscription && (
-                    <ExternalLink className="w-5 h-5 ml-3 group-hover:rotate-12 transition-transform duration-300" />
+                    <ExternalLink className="w-5 h-5 ml-3 transition-transform group-hover:rotate-12" />
                   )}
-                </button>
+                </motion.button>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           
-          {/* Right side - Sphere - Hidden on mobile */}
-          <div className="sphere-container">
+          {/* Right sphere */}
+          <motion.div 
+            className="sphere-container h-[420px] w-[420px] sm:h-[540px] sm:w-[540px] lg:h-[720px] lg:w-[720px]"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
             <div className="sphere">
               {rings.map((i) => (
-                <div key={i} className={`ring ring${i}`}></div>
+                <div key={i} className={`ring ring${i}`} />
               ))}
             </div>
+          </motion.div>
+        </motion.div>
+        {/* Scroll indicator */}
+        <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.9 }}
+            transition={{ delay: 0.6 }}
+            className="text-xs uppercase tracking-widest text-slate-400"
+          >
+            Scroll
+          </motion.span>
+          <div className="h-10 w-6 rounded-full border border-slate-600/70 flex items-start justify-center p-1">
+            <motion.div
+              className="h-2 w-2 rounded-full bg-slate-300"
+              animate={{ y: [0, 22, 0], opacity: [1, 0.2, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Footer Links - restored */}
-      <footer className="relative z-20 w-full flex-none py-8">
-        <div className="container mx-auto flex justify-center space-x-8">
-          <a href="#" onClick={() => handlePageChange('privacy')} className="text-slate-400 hover:text-slate-200 transition-colors">Privacy Policy</a>
-          <a href="#" onClick={() => handlePageChange('contact')} className="text-slate-400 hover:text-slate-200 transition-colors">Contact Us</a>
-          <a href="#" onClick={() => handlePageChange('bug-report')} className="text-slate-400 hover:text-slate-200 transition-colors">Bug Report</a>
+      {/* New Sections */}
+      <ComparisonSection onUpgrade={handleUpgradeClick} isLoading={isLoadingSubscription} />
+      <CloudSection />
+      <ReferralSection />
+      <FinalCTA 
+        onDownload={() => setIsDownloadModalOpen(true)}
+        onUpgrade={handleUpgradeClick}
+        proActive={Boolean(isAuthenticated && isPro)}
+        isLoading={isLoadingSubscription}
+      />
+
+      {/* Footer Links */}
+      <motion.footer 
+        className="relative z-20 w-full flex-none py-6 sm:py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-4 sm:gap-8">
+          <motion.a 
+            href="#" 
+            onClick={() => handlePageChange('privacy')} 
+            className="text-slate-400 hover:text-slate-200 transition-colors text-sm sm:text-base touch-target"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Privacy Policy
+          </motion.a>
+          <motion.a 
+            href="#" 
+            onClick={() => handlePageChange('contact')} 
+            className="text-slate-400 hover:text-slate-200 transition-colors text-sm sm:text-base touch-target"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Contact Us
+          </motion.a>
+          <motion.a 
+            href="#" 
+            onClick={() => handlePageChange('bug-report')} 
+            className="text-slate-400 hover:text-slate-200 transition-colors text-sm sm:text-base touch-target"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Bug Report
+          </motion.a>
         </div>
-      </footer>
+      </motion.footer>
 
       {/* Stripe Checkout Modal */}
       <StripeCheckout 
@@ -200,4 +456,4 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange, isTransitioning }
   );
 };
 
-export default HomePage; 
+export default HomePage;

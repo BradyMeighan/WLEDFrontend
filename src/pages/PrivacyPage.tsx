@@ -1,32 +1,45 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
-import '../App.css';
 
 interface PrivacyPageProps {
   handlePageChange: (page: string) => void;
-  isTransitioning: boolean;
 }
 
-const PrivacyPage = ({ handlePageChange, isTransitioning }: PrivacyPageProps) => {
+const PrivacyPage = ({ handlePageChange }: PrivacyPageProps) => {
   return (
     <div className="min-h-screen bg-slate-900 text-white relative">
       {/* Full-height gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30"></div>
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
       
-      <div className={`relative z-10 container mx-auto py-8 px-4 md:px-8 transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        <button 
+      <div className="relative z-10 container mx-auto py-8 px-4 sm:px-6 md:px-8">
+        <motion.button 
           onClick={() => handlePageChange('home')}
-          className="flex items-center text-slate-300 hover:text-purple-300 mb-8 transition-colors duration-300 group"
+          className="flex items-center text-slate-300 hover:text-purple-300 mb-8 transition-colors group touch-target"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileHover={{ x: -5 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <ArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-300" />
+          <ArrowLeft className="w-5 h-5 mr-2" />
           Back to Home
-        </button>
+        </motion.button>
         
-        <div className="max-w-4xl mx-auto bg-slate-800/80 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden">
-          <div className="p-8 md:p-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-purple-400 mb-12 text-center">
+        <motion.div 
+          className="max-w-4xl mx-auto bg-slate-800/80 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="p-6 sm:p-8 md:p-12">
+            <motion.h1 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-400 mb-8 sm:mb-12 text-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               Privacy Policy
-            </h1>
+            </motion.h1>
             
             <div className="space-y-8 text-slate-300">
               <div className="bg-slate-700/30 rounded-lg p-6">
@@ -199,7 +212,7 @@ const PrivacyPage = ({ handlePageChange, isTransitioning }: PrivacyPageProps) =>
               </section>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -714,7 +714,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Dropdown Menu */}
       {isDropdownOpen && (
-        <div className={`absolute right-0 top-full mt-2 w-80 bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl shadow-2xl z-50 transition-all duration-200 transform ${dropdownTransition ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`absolute right-0 top-full mt-2 w-80 bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-xl shadow-2xl z-[9998] transition-all duration-200 transform ${dropdownTransition ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* User Header */}
           <div className="px-6 py-4 border-b border-slate-600/50 bg-gradient-to-r from-purple-900/30 to-blue-900/30">
             <div className="flex items-center space-x-3">
@@ -825,7 +825,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Profile Modal */}
       {isProfileModalOpen && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 ${modalTransitions.profile ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.profile ? 'opacity-100' : 'opacity-0'}`}>
           <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.profile ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
@@ -1008,7 +1008,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Pro Status Modal */}
       {isProStatusModalOpen && proStatusData && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100' : 'opacity-0'}`}>
           <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.proStatus ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
@@ -1118,7 +1118,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Manage Subscription Modal */}
       {isManageSubscriptionModalOpen && subscriptionData && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100' : 'opacity-0'}`}>
           <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-all duration-300 ${modalTransitions.manageSubscription ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
@@ -1284,7 +1284,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Payment Method Update Modal */}
       {isUpdatePaymentModalOpen && (
-        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100' : 'opacity-0'}`}>
           <div className={`bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-md transition-all duration-300 ${modalTransitions.updatePayment ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
@@ -1315,7 +1315,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
 
       {/* Global Alert */}
       {alert && !isProfileModalOpen && !isManageSubscriptionModalOpen && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
+        <div className="fixed top-4 right-4 z-[9999] max-w-md">
           <Alert 
             type={alert.type}
             message={alert.message}

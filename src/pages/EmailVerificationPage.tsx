@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import Alert from '../components/Alert.tsx';
 import { ArrowLeft } from 'lucide-react';
-import '../App.css';
 
 interface EmailVerificationPageProps {
   handlePageChange: (page: string) => void;
@@ -44,50 +44,96 @@ const EmailVerificationPage: React.FC<EmailVerificationPageProps> = ({ handlePag
   }, [verifyEmail, handlePageChange]);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
-      <div className="absolute top-6 left-6">
-        <button 
+    <div className="min-h-screen bg-slate-900 text-white relative flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
+      
+      <motion.div 
+        className="absolute top-4 sm:top-6 left-4 sm:left-6"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        <motion.button 
           onClick={() => handlePageChange('home')}
-          className="btn btn-icon bg-slate-800 hover:bg-slate-700 text-white"
+          className="flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg transition-colors touch-target"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft size={24} />
-        </button>
-      </div>
-      <div className="bg-slate-800 p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-lg text-center">
-        <h2 className="text-3xl font-bold text-purple-400 mb-6">
+        </motion.button>
+      </motion.div>
+      
+      <motion.div 
+        className="bg-slate-800/90 backdrop-blur-lg p-6 sm:p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-lg text-center border border-slate-700/50"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.h2 
+          className="text-2xl sm:text-3xl font-bold text-purple-400 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
           Email Verification
-        </h2>
+        </motion.h2>
+        
         {status === 'verifying' && (
-          <div className="flex justify-center items-center my-6">
+          <motion.div 
+            className="flex flex-col sm:flex-row justify-center items-center gap-4 my-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-            <p className="ml-4 text-lg text-slate-300">{message}</p>
-          </div>
+            <p className="text-base sm:text-lg text-slate-300">{message}</p>
+          </motion.div>
         )}
+        
         {status === 'success' && (
-          <Alert message={message} type="success" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert message={message} type="success" />
+          </motion.div>
         )}
+        
         {status === 'error' && (
-          <Alert message={message} type="error" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert message={message} type="error" />
+          </motion.div>
         )}
-        <div className="mt-8">
+        
+        <motion.div 
+          className="mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           {status === 'success' && (
-            <button 
+            <motion.button 
               onClick={() => handlePageChange('login')}
-              className="btn btn-primary w-full md:w-auto"
+              className="btn btn-primary w-full sm:w-auto touch-target"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Proceed to Login
-            </button>
+            </motion.button>
           )}
           {status === 'error' && (
-            <button 
-              onClick={() => handlePageChange('home')} // Or to a page to request new token
-              className="btn btn-secondary w-full md:w-auto"
+            <motion.button 
+              onClick={() => handlePageChange('home')}
+              className="btn btn-secondary w-full sm:w-auto touch-target"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Back to Home
-            </button>
+            </motion.button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

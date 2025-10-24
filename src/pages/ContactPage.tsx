@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Send, Mail, User, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface ContactPageProps {
   handlePageChange: (page: string) => void;
-  isTransitioning: boolean;
 }
 
 interface ContactFormData {
@@ -19,7 +19,7 @@ interface AlertState {
   message: string;
 }
 
-const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange, isTransitioning }) => {
+const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange }) => {
   const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<ContactFormData>({
     name: user?.fullName || '',
@@ -86,33 +86,59 @@ const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange, isTransitio
   return (
     <div className="min-h-screen bg-slate-900 text-white relative">
       {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30"></div>
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
       
-      <div className={`relative z-10 container mx-auto px-6 py-12 min-h-screen transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 min-h-screen">
         {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
+        <motion.div 
+          className="flex items-center mb-8"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <motion.button
             onClick={() => handlePageChange('home')}
-            className="flex items-center text-slate-400 hover:text-white transition-colors mr-6"
+            className="flex items-center text-slate-400 hover:text-white transition-colors mr-6 touch-target"
+            whileHover={{ x: -5 }}
+            whileTap={{ scale: 0.95 }}
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Home
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        <div className="max-w-4xl mx-auto">
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <motion.h1 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               Contact Us
-            </h1>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p 
+              className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               Have questions about WLED Studio? Need technical support? We're here to help!
-            </p>
+            </motion.p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Contact Information */}
-            <div className="space-y-8">
+            <motion.div 
+              className="space-y-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
               <div>
                 <h2 className="text-2xl font-bold mb-6 text-white">Get in Touch</h2>
                 <div className="space-y-4">
@@ -144,10 +170,15 @@ const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange, isTransitio
                   Pro subscribers receive priority support with faster response times.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Contact Form */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 lg:p-8">
+            <motion.div 
+              className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 lg:p-8"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
               <h2 className="text-2xl font-bold mb-6 text-white">Send us a Message</h2>
               
               {alert && (
@@ -232,10 +263,12 @@ const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange, isTransitio
                   />
                 </div>
 
-                <button
+                <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed flex items-center justify-center touch-target"
+                  whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                 >
                   {isSubmitting ? (
                     <>
@@ -248,11 +281,11 @@ const ContactPage: React.FC<ContactPageProps> = ({ handlePageChange, isTransitio
                       Send Message
                     </>
                   )}
-                </button>
+                </motion.button>
               </form>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

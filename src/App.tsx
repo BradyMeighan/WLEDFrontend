@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import './App.css';
 import HomePage from './pages/HomePage.tsx';
@@ -11,26 +12,42 @@ import BugReportPage from './pages/BugReportPage.tsx';
 
 type PageType = 'home' | 'login' | 'signup' | 'verify-email' | 'privacy' | 'contact' | 'bug-report';
 
+// Page transition variants
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.3,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
+};
+
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('home' as PageType);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
 
   const handlePageChange = useCallback((page: string) => {
     if (page === currentPage) return;
     
-    setIsTransitioning(true);
-    
     if (currentPage === 'verify-email') {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
-    setTimeout(() => {
-      setCurrentPage(page as PageType);
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 50);
-    }, 300);
+    setCurrentPage(page as PageType);
   }, [currentPage]);
 
   useEffect(() => {
@@ -60,28 +77,36 @@ function AppContent() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home':
-        return <HomePage handlePageChange={handlePageChange} isTransitioning={isTransitioning} />;
+        return <HomePage key="home" handlePageChange={handlePageChange} />;
       case 'login':
-        return <LoginPage handlePageChange={handlePageChange} />;
+        return <LoginPage key="login" handlePageChange={handlePageChange} />;
       case 'signup':
-        return <SignupPage handlePageChange={handlePageChange} />;
+        return <SignupPage key="signup" handlePageChange={handlePageChange} />;
       case 'verify-email':
-        return <EmailVerificationPage handlePageChange={handlePageChange} />;
+        return <EmailVerificationPage key="verify-email" handlePageChange={handlePageChange} />;
       case 'privacy':
-        return <PrivacyPage handlePageChange={handlePageChange} isTransitioning={isTransitioning} />;
+        return <PrivacyPage key="privacy" handlePageChange={handlePageChange} />;
       case 'contact':
-        return <ContactPage handlePageChange={handlePageChange} isTransitioning={isTransitioning} />;
+        return <ContactPage key="contact" handlePageChange={handlePageChange} />;
       case 'bug-report':
-        return <BugReportPage handlePageChange={handlePageChange} isTransitioning={isTransitioning} />;
+        return <BugReportPage key="bug-report" handlePageChange={handlePageChange} />;
       default:
-        return <HomePage handlePageChange={handlePageChange} isTransitioning={isTransitioning} />;
+        return <HomePage key="home" handlePageChange={handlePageChange} />;
     }
   };
 
   return (
-    <div className={`page-transition ${isTransitioning ? 'fade-out' : 'fade-in'}`}>
-      {renderCurrentPage()}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentPage}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={pageVariants}
+      >
+        {renderCurrentPage()}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

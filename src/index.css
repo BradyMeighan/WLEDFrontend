@@ -2,16 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html {
+    @apply scroll-smooth;
+    min-height: 100%;
+  }
+
+  body {
+    @apply m-0 bg-[#0f0f23] text-white min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  /* Ensure background covers full viewport */
+  #root {
+    @apply min-h-screen;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer components {
+  /* Modern Button Styles */
+  .btn {
+    @apply inline-flex items-center justify-center font-semibold no-underline border-none cursor-pointer transition-all duration-300 outline-none relative overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-br from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3.5 px-8 rounded-xl text-lg shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:-translate-y-0.5;
+  }
+
+  .btn-secondary {
+    @apply bg-purple-500/10 hover:bg-purple-500/20 border-2 border-purple-500/30 hover:border-purple-500/50 text-purple-200 py-3.5 px-8 rounded-xl text-lg backdrop-blur-md hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/20;
+  }
+
+  .btn-sm {
+    @apply py-2.5 px-5 text-sm rounded-lg;
+  }
+
+  .btn-lg {
+    @apply py-4 px-10 text-xl rounded-2xl;
+  }
+
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed transform-none;
+  }
+
+  /* Form Styles */
+  .form-input {
+    @apply w-full px-4 py-3 bg-slate-800/80 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200;
+  }
+
+  .form-label {
+    @apply block mb-2 text-sm font-medium text-slate-300;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-slate-900/60 backdrop-blur-2xl border border-slate-700/40 rounded-3xl p-8 shadow-2xl;
+  }
+
+  @media (max-width: 768px) {
+    .card {
+      @apply p-6;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom mobile utilities */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Touch target sizes for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
