@@ -11,9 +11,8 @@ export default defineConfig({
   build: {
     outDir: 'build'
   },
-  define: {
-    // Define environment variables
-    'import.meta.env.VITE_API_URL': JSON.stringify('https://wledwebsite-production.up.railway.app'),
-    'import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY': JSON.stringify('pk_live_51RTQmbAxfoQFWwHUewaz3Jr8G6V76WX1tklQ4ZHAfO7iBoezhTAKGp7ABmt25LiBB6dvIxJJ6Qt75Py66yR68Our00zgGezTnr')
-  }
+  // Remove hardcoded environment variables - use .env file instead
+  // define: {
+  //   // Environment variables should be in .env file
+  // }
 })

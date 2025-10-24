@@ -53,7 +53,7 @@ interface LEDParticleBackgroundProps {
 
 const LEDParticleBackground: React.FC<LEDParticleBackgroundProps> = ({ className = '' }) => {
   return (
-    <div className={`absolute inset-0 ${className}`}>
+    <div className={`absolute inset-0 ${className}`} style={{ zIndex: 5 }}>
       <Canvas 
         camera={{ position: [0, 0, 8], fov: 50 }} 
         dpr={[1, 2]}

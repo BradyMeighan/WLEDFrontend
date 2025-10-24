@@ -244,48 +244,51 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-blue-900/30 -z-10" />
       
-      {/* Header Navigation */}
-      <motion.header 
-        className="relative z-20 w-full flex-none"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-end">
-          <div className="flex items-center gap-3 sm:gap-4">
-            {isAuthenticated ? (
-              <UserProfile 
-                onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
-                handlePageChange={handlePageChange}
-              />
-            ) : (
-              <>
-                <motion.button 
-                  onClick={() => handlePageChange('login')}
-                  className="btn btn-secondary btn-sm touch-target"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Login
-                </motion.button>
-                <motion.button 
-                  onClick={() => handlePageChange('signup')}
-                  className="btn btn-primary btn-sm touch-target"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Sign Up
-                </motion.button>
-              </>
-            )}
-          </div>
-        </nav>
-      </motion.header>
-      
-      {/* Hero */}
-      <div className="relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-8 lg:pt-0 pb-16 lg:pb-24 min-h-[88vh] lg:min-h-[90vh] overflow-visible">
-        {/* LED Particle Background */}
+      {/* Header + Hero Container with Particle Background */}
+      <div className="relative">
+        {/* LED Particle Background - only for header + hero */}
         <LEDParticleBackground />
+        
+        {/* Header Navigation */}
+        <motion.header 
+          className="relative z-20 w-full flex-none"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-end">
+            <div className="flex items-center gap-3 sm:gap-4">
+              {isAuthenticated ? (
+                <UserProfile 
+                  onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
+                  handlePageChange={handlePageChange}
+                />
+              ) : (
+                <>
+                  <motion.button 
+                    onClick={() => handlePageChange('login')}
+                    className="btn btn-secondary btn-sm touch-target"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Login
+                  </motion.button>
+                  <motion.button 
+                    onClick={() => handlePageChange('signup')}
+                    className="btn btn-primary btn-sm touch-target"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Sign Up
+                  </motion.button>
+                </>
+              )}
+            </div>
+          </nav>
+        </motion.header>
+        
+        {/* Hero */}
+        <div className="relative z-10 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-8 lg:pt-0 pb-16 lg:pb-24 min-h-[88vh] lg:min-h-[90vh] overflow-visible">
         
         <motion.div 
           className="container mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12"
@@ -372,22 +375,33 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
           </motion.div>
         </motion.div>
         {/* Scroll indicator */}
-        <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+        <motion.div 
+          className="cursor-pointer absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 group"
+          onClick={() => {
+            const nextSection = document.querySelector('section');
+            if (nextSection) {
+              nextSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.9 }}
             transition={{ delay: 0.6 }}
-            className="text-xs uppercase tracking-widest text-slate-400"
+            className="text-xs uppercase tracking-widest text-slate-400 group-hover:text-slate-200 transition-colors"
           >
             Scroll
           </motion.span>
-          <div className="h-10 w-6 rounded-full border border-slate-600/70 flex items-start justify-center p-1">
+          <div className="h-10 w-6 rounded-full border border-slate-600/70 group-hover:border-slate-400/70 transition-colors flex items-start justify-center p-1">
             <motion.div
-              className="h-2 w-2 rounded-full bg-slate-300"
+              className="h-2 w-2 rounded-full bg-slate-300 group-hover:bg-white transition-colors"
               animate={{ y: [0, 22, 0], opacity: [1, 0.2, 1] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             />
           </div>
+        </motion.div>
         </div>
       </div>
 

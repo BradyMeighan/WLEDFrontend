@@ -13,10 +13,17 @@ const stripeApi = axios.create({
 
 // Add request interceptor to include auth token
 stripeApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // Get Clerk session token
+    if (typeof window !== 'undefined' && window.Clerk) {
+      try {
+        const token = await window.Clerk.session?.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn('Failed to get Clerk token for Stripe API:', error);
+      }
     }
     return config;
   },
@@ -28,13 +35,29 @@ stripeApi.interceptors.request.use(
 // Add response interceptor for error handling
 stripeApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Don't redirect on 401 for subscription status checks
-    if (error.response?.status === 401 && !error.config?.url?.includes('/subscription-status')) {
-      // Token expired or invalid
-      localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Try to get a fresh Clerk token and retry
+      try {
+        if (typeof window !== 'undefined' && window.Clerk) {
+          const token = await window.Clerk.session?.getToken();
+          if (token) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return stripeApi.request(originalRequest);
+          }
+        }
+      } catch (retryError) {
+        console.warn('Failed to retry Stripe request with fresh Clerk token:', retryError);
+      }
+      
+      // If we can't get a fresh token, dispatch logout event
+      window.dispatchEvent(new CustomEvent('auth:logout'));
     }
+    
     return Promise.reject(error);
   }
 );
@@ -68,13 +91,23 @@ export const stripeService = {
   // Create subscription
   async createSubscription(priceId, paymentMethodId) {
     try {
+      console.log('📡 Sending to backend:', {
+        price_id: priceId,
+        payment_method_id: paymentMethodId,
+        url: '/create-subscription'
+      });
+      
       const response = await stripeApi.post('/create-subscription', {
         price_id: priceId,
         payment_method_id: paymentMethodId,
       });
+      
+      console.log('✅ Backend response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error creating subscription:', error);
+      console.error('❌ Error creating subscription:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
       
       // Provide more specific error handling
       if (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch')) {

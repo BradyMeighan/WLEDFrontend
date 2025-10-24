@@ -39,7 +39,15 @@ interface StripeCheckoutProps {
 }
 
 // Initialize Stripe with your publishable key from environment
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51RTQmbAxfoQFWwHUewaz3Jr8G6V76WX1tklQ4ZHAfO7iBoezhTAKGp7ABmt25LiBB6dvIxJJ6Qt75Py66yR68Our00zgGezTnr');
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+if (!STRIPE_PUBLISHABLE_KEY) {
+  throw new Error("Missing Stripe Publishable Key. Please add VITE_STRIPE_PUBLISHABLE_KEY to your .env file");
+}
+
+console.log('🔑 Using Stripe key:', STRIPE_PUBLISHABLE_KEY.substring(0, 20) + '...');
+
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 // Custom appearance for Stripe Elements matching the homepage theme
 const stripeAppearance = {
@@ -147,9 +155,21 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ selectedPlan, onSuccess, on
           return;
         }
 
+        console.log('💳 Created payment method:', paymentMethod.id);
+        console.log('💳 Payment method details:', {
+          id: paymentMethod.id,
+          type: paymentMethod.type,
+          livemode: paymentMethod.livemode
+        });
+
         setProcessingStep('Creating subscription...');
 
         // Create subscription on backend
+        console.log('🚀 Calling backend with:', {
+          planId: selectedPlan.id,
+          paymentMethodId: paymentMethod.id
+        });
+        
         const result = await stripeService.createSubscription(selectedPlan.id, paymentMethod.id);
         
         if (result.success) {

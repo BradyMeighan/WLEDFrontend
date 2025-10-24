@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, apiUtils } from '../services/api';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUser, useClerk } from '@clerk/clerk-react';
+import axios from 'axios';
 
 interface User {
   id?: string;
@@ -39,61 +40,109 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const { signOut, openSignIn, openSignUp } = useClerk();
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle forced logout from API interceptor
+  // Sync Clerk user with our backend database and local state
   useEffect(() => {
-    const handleAuthLogout = () => {
-      setUser(null);
-      setIsAuthenticated(false);
-      apiUtils.clearAuth();
-    };
-
-    window.addEventListener('auth:logout', handleAuthLogout);
-    return () => window.removeEventListener('auth:logout', handleAuthLogout);
-  }, []);
-
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (apiUtils.isAuthenticated()) {
-        try {
-          const result = await authAPI.getCurrentUser();
-          if (result.success) {
-            setUser(result.data);
-            setIsAuthenticated(true);
-          } else {
-            // Token is invalid, clear it
-            apiUtils.clearAuth();
-            setUser(null);
-            setIsAuthenticated(false);
+    const syncUser = async () => {
+      if (clerkLoaded) {
+        if (isSignedIn && clerkUser) {
+          // Call backend to sync user with database
+          try {
+            const token = await window.Clerk?.session?.getToken();
+            if (token) {
+              console.log('🔄 Syncing user with backend...');
+              console.log('🌐 Backend URL:', import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app');
+              console.log('🔑 Token preview:', token.substring(0, 20) + '...');
+              
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/user/sync`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'include'
+              });
+              
+              console.log('📡 Response status:', response.status);
+              
+              if (response.ok) {
+                const data = await response.json();
+                console.log('✅ User synced with backend:', data.user);
+                
+                // Update local state with backend data
+                setUser({
+                  id: data.user.id,
+                  email: data.user.email,
+                  fullName: data.user.fullName,
+                  proStatus: data.user.proStatus,
+                  emailVerified: data.user.emailVerified
+                });
+              } else {
+                const errorText = await response.text();
+                console.warn('⚠️ Failed to sync user with backend:', response.status, errorText);
+                // Fallback to Clerk data
+                const proStatus = clerkUser.publicMetadata?.proStatus as boolean || false;
+                setUser({
+                  id: clerkUser.id,
+                  email: clerkUser.primaryEmailAddress?.emailAddress || '',
+                  fullName: clerkUser.fullName || clerkUser.firstName || '',
+                  proStatus: proStatus,
+                  emailVerified: clerkUser.primaryEmailAddress?.verification?.status === 'verified'
+                });
+              }
+            } else {
+              console.warn('⚠️ No Clerk token available');
+              // Fallback to Clerk data without backend sync
+              const proStatus = clerkUser.publicMetadata?.proStatus as boolean || false;
+              setUser({
+                id: clerkUser.id,
+                email: clerkUser.primaryEmailAddress?.emailAddress || '',
+                fullName: clerkUser.fullName || clerkUser.firstName || '',
+                proStatus: proStatus,
+                emailVerified: clerkUser.primaryEmailAddress?.verification?.status === 'verified'
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error syncing user with backend:', error);
+            console.error('❌ Error details:', {
+              name: error.name,
+              message: error.message,
+              stack: error.stack
+            });
+            
+            // Fallback to Clerk data
+            const proStatus = clerkUser.publicMetadata?.proStatus as boolean || false;
+            setUser({
+              id: clerkUser.id,
+              email: clerkUser.primaryEmailAddress?.emailAddress || '',
+              fullName: clerkUser.fullName || clerkUser.firstName || '',
+              proStatus: proStatus,
+              emailVerified: clerkUser.primaryEmailAddress?.verification?.status === 'verified'
+            });
           }
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          apiUtils.clearAuth();
+        } else {
           setUser(null);
-          setIsAuthenticated(false);
         }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
+    
+    syncUser();
+  }, [clerkUser, isSignedIn, clerkLoaded]);
 
-    checkAuth();
-  }, []);
-
+  // These methods are now handled by Clerk's UI components
+  // We're keeping them for backward compatibility but redirecting to Clerk
   const login = async (email: string, password: string, rememberMe?: boolean) => {
     try {
-      const result = await authAPI.login(email, password, rememberMe);
-      
-      if (result.success) {
-        setUser(result.data.user);
-        setIsAuthenticated(true);
-        return { success: true, user: result.data.user };
-      } else {
-        return { success: false, error: result.error, code: result.code };
-      }
+      // Clerk handles authentication through their components
+      // This method is kept for compatibility but redirects to Clerk sign-in
+      openSignIn();
+      return { success: false, error: 'Please use the Clerk sign-in component' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: 'An unexpected error occurred' };
@@ -102,14 +151,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (userData: any) => {
     try {
-      const result = await authAPI.register(userData);
-      
-      if (result.success) {
-        // Note: User needs to verify email before they can login
-        return { success: true, data: result.data };
-      } else {
-        return { success: false, error: result.error, details: result.details, code: result.code };
-      }
+      // Clerk handles registration through their components
+      openSignUp();
+      return { success: false, error: 'Please use the Clerk sign-up component' };
     } catch (error) {
       console.error('Registration error:', error);
       return { success: false, error: 'An unexpected error occurred' };
@@ -118,73 +162,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      await authAPI.logout();
+      await signOut();
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      setUser(null);
-      setIsAuthenticated(false);
-      apiUtils.clearAuth();
     }
   };
 
+  // Email verification is now handled by Clerk automatically
   const verifyEmail = async (token: string) => {
-    try {
-      const result = await authAPI.verifyEmail(token);
-      if (result.success && result.data) {
-        return { success: true, message: result.data.message || 'Email verified successfully' };
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error: any) {
-      throw new Error(error.message || 'Email verification failed');
-    }
+    return { success: true, message: 'Email verification is handled by Clerk' };
   };
 
   const resendVerification = async (email: string) => {
-    try {
-      const result = await authAPI.resendVerification(email);
-      if (result.success && result.data) {
-        return { success: true, message: result.data.message || 'Verification email sent' };
-      } else {
-        return { success: false, error: result.error };
-      }
-    } catch (error) {
-      return { 
-        success: false, 
-        error: 'Failed to resend verification email' 
-      };
-    }
+    return { success: true, message: 'Email verification is handled by Clerk' };
   };
 
+  // Password reset is handled by Clerk
   const forgotPassword = async (email: string) => {
-    try {
-      const result = await authAPI.forgotPassword(email);
-      return result;
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      return { success: false, error: 'An unexpected error occurred' };
-    }
+    return { success: true, message: 'Password reset is handled by Clerk' };
   };
 
   const resetPassword = async (token: string, password: string) => {
-    try {
-      const result = await authAPI.resetPassword(token, password);
-      return result;
-    } catch (error) {
-      console.error('Reset password error:', error);
-      return { success: false, error: 'An unexpected error occurred' };
-    }
+    return { success: true, message: 'Password reset is handled by Clerk' };
   };
 
   const checkPasswordStrength = async (password: string) => {
-    try {
-      const result = await authAPI.checkPasswordStrength(password);
-      return result;
-    } catch (error) {
-      console.error('Password strength check error:', error);
-      return { success: false, error: 'An unexpected error occurred' };
-    }
+    // Simple client-side check for compatibility
+    const strength = {
+      score: 0,
+      requirements: {
+        minLength: password.length >= 8,
+        hasUppercase: /[A-Z]/.test(password),
+        hasLowercase: /[a-z]/.test(password),
+        hasNumber: /\d/.test(password),
+        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      }
+    };
+    
+    strength.score = Object.values(strength.requirements).filter(Boolean).length;
+    
+    return { 
+      success: true, 
+      data: {
+        strength: strength.score,
+        isStrong: strength.score >= 4,
+        requirements: strength.requirements
+      }
+    };
   };
 
   const updateUser = (userData: User) => {
@@ -193,7 +218,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const value = {
     user,
-    isAuthenticated,
+    isAuthenticated: isSignedIn || false,
     isLoading,
     login,
     register,
@@ -213,4 +238,4 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-export default AuthContext; 
+export default AuthContext;

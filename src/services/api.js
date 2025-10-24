@@ -3,35 +3,26 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app',
-  withCredentials: true, // Important for cookies
-  timeout: 10000, // 10 second timeout
+  withCredentials: true,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Track if we're currently refreshing to prevent multiple refresh attempts
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  
-  failedQueue = [];
-};
-
-// Request interceptor to add auth token
+// Request interceptor to add Clerk auth token
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // Get Clerk session token
+    if (typeof window !== 'undefined' && window.Clerk) {
+      try {
+        const token = await window.Clerk.session?.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn('Failed to get Clerk token:', error);
+      }
     }
     return config;
   },
@@ -40,54 +31,33 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for token refresh
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If we're already refreshing, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api.request(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
-
+      
+      // Try to get a fresh Clerk token and retry
       try {
-        const response = await api.post('/api/auth/refresh');
-        const { accessToken } = response.data;
-        
-        localStorage.setItem('accessToken', accessToken);
-        processQueue(null, accessToken);
-        
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api.request(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, clear auth and redirect
-        processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        
-        // Only redirect if we're not already on a public page
-        if (window.location.pathname !== '/' && 
-            window.location.pathname !== '/login' && 
-            window.location.pathname !== '/signup') {
-          // Dispatch a custom event instead of direct redirect
-          window.dispatchEvent(new CustomEvent('auth:logout'));
+        if (typeof window !== 'undefined' && window.Clerk) {
+          const token = await window.Clerk.session?.getToken();
+          if (token) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api.request(originalRequest);
+          }
         }
-        
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+      } catch (retryError) {
+        console.warn('Failed to retry request with fresh Clerk token:', retryError);
+      }
+      
+      // If we can't get a fresh token, dispatch logout event
+      if (window.location.pathname !== '/' && 
+          window.location.pathname !== '/login' && 
+          window.location.pathname !== '/signup') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
       }
     }
 
@@ -95,131 +65,36 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication API calls
+// Authentication is now handled by Clerk - these are stubs for backward compatibility
 export const authAPI = {
-  // Register new user
-  register: async (userData) => {
-    try {
-      const response = await api.post('/api/auth/register', userData);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Registration failed',
-        code: error.response?.status || error.response?.data?.code,
-        details: error.response?.data?.details || []
-      };
-    }
-  },
-
-  // Login user
-  login: async (email, password, rememberMe = false) => {
-    try {
-      const response = await api.post('/api/auth/login', { email, password, rememberMe });
-      const { accessToken, user } = response.data;
-      
-      // Store token in localStorage
-      localStorage.setItem('accessToken', accessToken);
-      
-      return { success: true, data: { user, accessToken } };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed',
-        code: error.response?.status || error.response?.data?.code
-      };
-    }
-  },
-
-  // Logout user
-  logout: async () => {
-    try {
-      await api.post('/api/auth/logout');
-      localStorage.removeItem('accessToken');
-      return { success: true };
-    } catch (error) {
-      // Even if logout fails on server, clear local storage
-      localStorage.removeItem('accessToken');
-      return { success: true };
-    }
-  },
-
-  // Get current user info
-  getCurrentUser: async () => {
-    try {
-      const response = await api.get('/api/auth/me');
-      return { success: true, data: response.data.user };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to get user info'
-      };
-    }
-  },
-
-  // Verify email
-  verifyEmail: async (token) => {
-    try {
-      const response = await api.post('/api/auth/verify-email', { token });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Email verification failed'
-      };
-    }
-  },
-
-  // Resend verification email
-  resendVerification: async (email) => {
-    try {
-      const response = await api.post('/api/auth/resend-verification', { email });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to resend verification'
-      };
-    }
-  },
-
-  // Request password reset
-  forgotPassword: async (email) => {
-    try {
-      const response = await api.post('/api/auth/forgot-password', { email });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to send reset email'
-      };
-    }
-  },
-
-  // Reset password
-  resetPassword: async (token, password) => {
-    try {
-      const response = await api.post('/api/auth/reset-password', { token, password });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Password reset failed'
-      };
-    }
-  },
-
-  // Check password strength
+  register: async () => ({ success: false, error: 'Use Clerk for authentication' }),
+  login: async () => ({ success: false, error: 'Use Clerk for authentication' }),
+  logout: async () => ({ success: true }),
+  getCurrentUser: async () => ({ success: false, error: 'Use Clerk for authentication' }),
+  verifyEmail: async () => ({ success: true, message: 'Handled by Clerk' }),
+  resendVerification: async () => ({ success: true, message: 'Handled by Clerk' }),
+  forgotPassword: async () => ({ success: true, message: 'Handled by Clerk' }),
+  resetPassword: async () => ({ success: true, message: 'Handled by Clerk' }),
   checkPasswordStrength: async (password) => {
-    try {
-      const response = await api.post('/api/auth/check-password-strength', { password });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to check password strength'
-      };
-    }
+    const strength = {
+      score: 0,
+      requirements: {
+        minLength: password.length >= 8,
+        hasUppercase: /[A-Z]/.test(password),
+        hasLowercase: /[a-z]/.test(password),
+        hasNumber: /\d/.test(password),
+        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+      }
+    };
+    strength.score = Object.values(strength.requirements).filter(Boolean).length;
+    return { 
+      success: true, 
+      data: {
+        strength: strength.score,
+        isStrong: strength.score >= 4,
+        requirements: strength.requirements
+      }
+    };
   }
 };
 
@@ -252,20 +127,6 @@ export const userAPI = {
     }
   },
 
-  // Change password
-  changePassword: async (passwordData) => {
-    try {
-      const response = await api.post('/api/user/change-password', passwordData);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to change password',
-        code: error.response?.data?.code
-      };
-    }
-  },
-
   // Get pro status
   getProStatus: async () => {
     try {
@@ -279,49 +140,29 @@ export const userAPI = {
     }
   },
 
-  // Get user sessions
+  // Get user sessions (now handled by Clerk)
   getSessions: async () => {
-    try {
-      const response = await api.get('/api/user/sessions');
-      return { success: true, data: response.data.sessions };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to get sessions'
-      };
-    }
+    return { success: true, data: [] };
   },
 
-  // Revoke session
-  revokeSession: async (sessionId) => {
-    try {
-      const response = await api.delete(`/api/user/sessions/${sessionId}`);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Failed to revoke session'
-      };
-    }
+  // Revoke session (now handled by Clerk)
+  revokeSession: async () => {
+    return { success: true, message: 'Handled by Clerk' };
   }
 };
 
 // Utility functions
 export const apiUtils = {
-  // Check if user is authenticated
+  // Authentication is now handled by Clerk
   isAuthenticated: () => {
-    return !!localStorage.getItem('accessToken');
+    return window.Clerk?.session !== null;
   },
-
-  // Clear authentication
   clearAuth: () => {
-    localStorage.removeItem('accessToken');
+    // Handled by Clerk
   },
-
-  // Get stored token
-  getToken: () => {
-    return localStorage.getItem('accessToken');
+  getToken: async () => {
+    return await window.Clerk?.session?.getToken();
   }
 };
 
-export default api; 
+export default api;

@@ -3,14 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import './App.css';
 import HomePage from './pages/HomePage.tsx';
-import LoginPage from './pages/LoginPage.tsx';
-import SignupPage from './pages/SignupPage.tsx';
 import EmailVerificationPage from './pages/EmailVerificationPage.tsx';
 import PrivacyPage from './pages/PrivacyPage.tsx';
 import ContactPage from './pages/ContactPage.tsx';
 import BugReportPage from './pages/BugReportPage.tsx';
+import AuthModal from './components/AuthModal.tsx';
 
-type PageType = 'home' | 'login' | 'signup' | 'verify-email' | 'privacy' | 'contact' | 'bug-report';
+type PageType = 'home' | 'verify-email' | 'privacy' | 'contact' | 'bug-report';
 
 // Page transition variants
 const pageVariants = {
@@ -38,9 +37,23 @@ const pageVariants = {
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('home' as PageType);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const { user, isAuthenticated, logout } = useAuth();
 
   const handlePageChange = useCallback((page: string) => {
+    if (page === 'login') {
+      setAuthMode('signin');
+      setAuthModalOpen(true);
+      return;
+    }
+    
+    if (page === 'signup') {
+      setAuthMode('signup');
+      setAuthModalOpen(true);
+      return;
+    }
+    
     if (page === currentPage) return;
     
     if (currentPage === 'verify-email') {
@@ -64,10 +77,10 @@ function AppContent() {
       newUrl.searchParams.set('token', verifyToken);
       newUrl.searchParams.delete('verify');
       window.history.replaceState({}, document.title, newUrl.toString());
-    } else if (isAuthenticated && (currentPage === 'login' || currentPage === 'signup')) {
-        handlePageChange('home');
+    } else if (isAuthenticated && authModalOpen) {
+      setAuthModalOpen(false);
     }
-  }, [isAuthenticated, currentPage, handlePageChange]);
+  }, [isAuthenticated, authModalOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -78,10 +91,6 @@ function AppContent() {
     switch (currentPage) {
       case 'home':
         return <HomePage key="home" handlePageChange={handlePageChange} />;
-      case 'login':
-        return <LoginPage key="login" handlePageChange={handlePageChange} />;
-      case 'signup':
-        return <SignupPage key="signup" handlePageChange={handlePageChange} />;
       case 'verify-email':
         return <EmailVerificationPage key="verify-email" handlePageChange={handlePageChange} />;
       case 'privacy':
@@ -96,17 +105,25 @@ function AppContent() {
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={currentPage}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        variants={pageVariants}
-      >
-        {renderCurrentPage()}
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPage}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+        >
+          {renderCurrentPage()}
+        </motion.div>
+      </AnimatePresence>
+      
+      <AuthModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        mode={authMode}
+      />
+    </>
   );
 }
 
