@@ -383,8 +383,8 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
               nextSection.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          style={{ transformOrigin: 'center' }}
         >
           <motion.span
             initial={{ opacity: 0 }}
