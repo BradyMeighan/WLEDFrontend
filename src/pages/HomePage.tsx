@@ -287,6 +287,7 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
         try {
           const token = await window.Clerk?.session?.getToken();
           if (token) {
+            console.log('🔍 Checking for referral rewards...');
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/referral/check`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -295,7 +296,13 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
             });
             if (response.ok) {
               const data = await response.json();
+              console.log('🎁 Referral check result:', data);
               setHasReferralReward(data.hasReward);
+              if (data.hasReward) {
+                console.log('✅ REFERRAL REWARD AVAILABLE - Button should appear!');
+              }
+            } else {
+              console.error('Failed to check referral reward:', response.status);
             }
           }
         } catch (error) {
@@ -309,6 +316,13 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
 
   const handleUpgradeClick = () => {
     if (isAuthenticated) {
+      // If user has referral reward, redirect them to use it instead
+      if (hasReferralReward) {
+        alert('You have a referral reward available! Please use the "Referral Reward 🎁" button to activate your 14-day free trial instead.');
+        console.log('⚠️ User tried to upgrade but has referral reward - redirecting to reward modal');
+        setIsReferralRewardModalOpen(true);
+        return;
+      }
       setIsCheckoutOpen(true);
     } else {
       handlePageChange('signup');
@@ -345,14 +359,24 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
                 <>
                   {hasReferralReward && (
                     <motion.button
-                      onClick={() => setIsReferralRewardModalOpen(true)}
-                      className="btn bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 border-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/50 animate-pulse"
+                      onClick={() => {
+                        console.log('🎁 Referral Reward button clicked!');
+                        setIsReferralRewardModalOpen(true);
+                      }}
+                      className="btn bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 border-yellow-500 text-white font-bold shadow-lg shadow-yellow-500/50 animate-pulse px-4 py-2 text-sm sm:text-base"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      style={{ animationDuration: '2s' }}
                     >
-                      <span className="mr-2">🎁</span>
-                      Referral Reward
+                      <span className="mr-2 text-xl">🎁</span>
+                      <span>Referral Reward!</span>
                     </motion.button>
+                  )}
+                  {/* DEBUG: Show reward status */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <span className="text-xs text-red-500">
+                      Reward: {hasReferralReward ? 'YES' : 'NO'}
+                    </span>
                   )}
                   <UserProfile 
                     onOpenStripeCheckout={() => setIsCheckoutOpen(true)}
@@ -566,11 +590,31 @@ const HomePage: React.FC<HomePageProps> = ({ handlePageChange }) => {
       {/* Referral Reward Modal */}
       <ReferralRewardModal 
         isOpen={isReferralRewardModalOpen}
-        onClose={() => {
+        onClose={async () => {
           setIsReferralRewardModalOpen(false);
           // Refresh reward status after closing
+          console.log('🔄 Refreshing reward status after modal close...');
           setHasReferralReward(false);
-          refreshStatus();
+          await refreshStatus();
+          
+          // Re-check referral reward status
+          try {
+            const token = await window.Clerk?.session?.getToken();
+            if (token) {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://wledwebsite-production.up.railway.app'}/api/referral/check`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              if (response.ok) {
+                const data = await response.json();
+                setHasReferralReward(data.hasReward);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to refresh referral reward:', error);
+          }
         }}
       />
     </div>

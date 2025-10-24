@@ -203,6 +203,18 @@ const PaymentMethodUpdateForm = ({ onSuccess, onCancel }: {
 };
 
 const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handlePageChange, hasReferralReward = false, onOpenReferralReward }) => {
+  
+  // Intercept checkout opening if user has referral reward
+  const handleOpenCheckout = () => {
+    if (hasReferralReward) {
+      alert('You have a referral reward available! Please use the "Referral Reward 🎁" option to activate your 14-day free trial instead.');
+      console.log('⚠️ User tried to upgrade but has referral reward - redirecting to reward');
+      onOpenReferralReward?.();
+      return;
+    }
+    onOpenStripeCheckout?.();
+  };
+  
   const { user, logout, updateUser } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -1111,7 +1123,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onOpenStripeCheckout, handleP
                     <button 
                       onClick={() => {
                         closeModals();
-                        onOpenStripeCheckout?.();
+                        handleOpenCheckout();
                       }}
                       className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 text-lg inline-flex items-center"
                     >
